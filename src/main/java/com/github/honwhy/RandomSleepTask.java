@@ -1,6 +1,5 @@
 package com.github.honwhy;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,7 +23,6 @@ public class RandomSleepTask implements Runnable {
             // Mock create big array
             int[] bigArray = new int[10000];
             TimeUnit.MICROSECONDS.sleep(left);
-            System.out.println(bigArray.length);
         } catch (InterruptedException e) {
             //ignore
         }

@@ -5,8 +5,10 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -14,27 +16,30 @@ import java.util.concurrent.TimeUnit;
  * -Xmx10m -Xms10m -XX:+UseParallelOldGC -XX:+PrintGCDetails -verbose:gc
  */
 public class TaskApp {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
+        System.err.println(Arrays.asList(args));
         ArgumentParser parser = buildArgumentParser();
         SizeData sizeData = parse(parser, args);
         System.out.println(sizeData);
         ThreadPoolExecutor executor = ThreadPoolExecutorBuilder.build(sizeData.coreSize, sizeData.maxSize, sizeData.queueSize);
-        Thread t1 = new Thread(()->{
-            for (int i = 0; i < sizeData.requestSize; i++) {
-                executor.submit(new RandomSleepTask());
+        List<Thread> threadList = new ArrayList<>(sizeData.parallel);
+        for (int i = 0; i < sizeData.parallel; i++) {
+            Thread t = new Thread(()->{
+                for (int j = 0; j < sizeData.requestSize; j++) {
+                    executor.submit(new RandomSleepTask());
+                }
+            });
+            t.start();
+            threadList.add(t);
+        }
+
+        threadList.parallelStream().forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                //ignore
             }
         });
-        t1.start();
-        Thread t2 = new Thread(()->{
-            for (int i = 0; i < sizeData.requestSize; i++) {
-                executor.submit(new RandomSleepTask());
-            }
-        });
-        t2.start();
-//        for (int i = 0; i < sizeData.requestSize; i++) {
-//            executor.submit(new RandomSleepTask());
-//        }
-        executor.awaitTermination(120, TimeUnit.SECONDS);
     }
 
     static SizeData parse(ArgumentParser parser, String[] args) {
@@ -50,7 +55,8 @@ public class TaskApp {
         Integer maxSize = ns.getInt("maxSize");
         Integer queueSize = ns.getInt("queueSize");
         Integer requestSize = ns.getInt("requestSize");
-        return new SizeData(coreSize, maxSize, queueSize, requestSize);
+        Integer parallel = ns.getInt("parallel");
+        return new SizeData(coreSize, maxSize, queueSize, requestSize, parallel);
     }
 
     static class SizeData {
@@ -58,12 +64,14 @@ public class TaskApp {
         Integer maxSize;
         Integer queueSize;
         Integer requestSize;
+        Integer parallel;
 
-        public SizeData(Integer coreSize, Integer maxSize, Integer queueSize, Integer requestSize) {
+        public SizeData(Integer coreSize, Integer maxSize, Integer queueSize, Integer requestSize, Integer parallel) {
             this.coreSize = coreSize;
             this.maxSize = maxSize;
             this.queueSize = queueSize;
             this.requestSize = requestSize;
+            this.parallel = parallel;
         }
 
         @Override
@@ -73,6 +81,7 @@ public class TaskApp {
                     ", maxSize=" + maxSize +
                     ", queueSize=" + queueSize +
                     ", requestSize=" + requestSize +
+                    ", parallel=" + parallel +
                     '}';
         }
     }
@@ -82,7 +91,6 @@ public class TaskApp {
                 .description("An example of fgc when using thread pool.");
         parser.addArgument("--coreSize")
                 .setDefault(Runtime.getRuntime().availableProcessors())
-                .required(true)
                 .type(Integer.class)
                 .help("core size of thread pool");
         parser.addArgument("--maxSize")
@@ -94,9 +102,13 @@ public class TaskApp {
                 .type(Integer.class)
                 .help("queue size of thread pool");
         parser.addArgument("--requestSize")
-                .setDefault(10_000)
+                .setDefault(1000)
                 .type(Integer.class)
                 .help("request size fgc test");
+        parser.addArgument("--parallel")
+                .setDefault(4)
+                .type(Integer.class)
+                .help("parallel level for test");
         return parser;
     }
 }
