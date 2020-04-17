@@ -17,12 +17,12 @@ public class RandomSleepTask implements Runnable {
 
     @Override
     public void run() {
-        long left = score % 1000;
+        long left = score % 2000;
         try {
             System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getSimpleName() + "-" + this.id + " will Sleep(" + left + "ms)...");
             // Mock create big array
             int[] bigArray = new int[10000];
-            TimeUnit.MICROSECONDS.sleep(left);
+            TimeUnit.MILLISECONDS.sleep(left);
         } catch (InterruptedException e) {
             //ignore
             //Thread.currentThread().interrupt();
