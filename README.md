@@ -1,6 +1,6 @@
 # fgc
 
-demo project to generate fgc
+demo project to generate fgc and other things
 
 ```shell
 -Xms2m
