@@ -108,7 +108,7 @@ public class MyHttpClientTest {
             }
         }
         for (int j = 0; j < size * 3; j++) {
-            HttpRequestTask task = new HttpRequestTask(ai.incrementAndGet(), randomChar());
+            AsyncHttpRequestTask task = new AsyncHttpRequestTask(ai.incrementAndGet(), randomChar());
             CompletableFuture<?> cf = CompletableFuture.supplyAsync(() -> {
                 return task.call();
             }, executor);
