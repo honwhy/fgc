@@ -128,4 +128,49 @@ public class MyHttpClientTest {
         executor.shutdown();
         System.out.println("test2 cost time:" + (System.currentTimeMillis() - start));
     }
+
+    @Test
+    public void test3() {
+        long start = System.currentTimeMillis();
+        // nio
+        List<CompletableFuture<?>> fs = new ArrayList<>(size);
+        List<CompletableFuture<?>> others = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            NioHttpClientTask task = new NioHttpClientTask(ai.incrementAndGet(), randomChar());
+            CompletableFuture<?> cf = task.doRequest();
+            if (i % 2 == 0) {
+                System.out.println("pick task-" + (i + 1));
+                fs.add(cf);
+            } else {
+                others.add(cf);
+            }
+        }
+        for (int j = 0; j < size * 2; j++) {
+            NioHttpClientTask task = new NioHttpClientTask(ai.incrementAndGet(), randomChar());
+            CompletableFuture<?> cf = task.doRequest();
+            if (j % 4 == 0) {
+                System.out.println("pick task-" + (j + size + 1));
+                fs.add(cf);
+            } else {
+                others.add(cf);
+            }
+        }
+        for (int j = 0; j < size * 3; j++) {
+            NioHttpClientTask task = new NioHttpClientTask(ai.incrementAndGet(), randomChar());
+            CompletableFuture<?> cf = task.doRequest();
+            others.add(cf);
+        }
+        CompletableFuture<?>[] fa = new CompletableFuture[0];
+        try {
+            CompletableFuture.allOf(fs.toArray(fa)).get(2500, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            e.printStackTrace();
+            if (e instanceof TimeoutException) {
+                fs.forEach(f -> f.cancel(true));
+            }
+        }
+        CompletableFuture.allOf(others.toArray(fa)).join();
+        NioHttpClientTask.closeClient();
+        System.out.println("test3 cost time:" + (System.currentTimeMillis() - start));
+    }
 }

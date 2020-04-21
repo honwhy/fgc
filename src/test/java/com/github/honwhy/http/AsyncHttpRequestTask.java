@@ -19,8 +19,9 @@ public class AsyncHttpRequestTask extends HttpRequestTask {
     }
 
     @Override
-    protected String doRequest(String requestUrl) throws Exception {
-        Future<Response> whenResponse = asyncHttpClient.prepareGet("http://www.example.com/").execute();
+    protected String doRequest() throws Exception {
+        String requestUrl = String.format("https://cn.bing.com/search?q=%s&qs=n&form=QBLH&sp=-1&pq=a&sc=9-1&sk=&cvid=493B94949A92491FB780F4BCCD085E37", getQuery());
+        Future<Response> whenResponse = asyncHttpClient.prepareGet(requestUrl).execute();
         Response response = whenResponse.get();
         if (response != null) {
             return response.getResponseBody(StandardCharsets.UTF_8);

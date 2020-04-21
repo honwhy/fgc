@@ -38,7 +38,7 @@ public class HttpRequestTask implements Callable<String> {
                 System.out.printf("[" + Thread.currentThread().getName() + "]" + this.getClass().getSimpleName() + "-" + this.id + " is interrupted");
                 return null;
             }
-            long left = score % 600;
+            long left = 500;//score % 600;
             try {
                 System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getSimpleName() + "-" + this.id + " will Sleep(" + left + "ms)...");
                 TimeUnit.MILLISECONDS.sleep(left);
@@ -51,9 +51,8 @@ public class HttpRequestTask implements Callable<String> {
                 System.err.println("get result from cache: key=" + query);
                 return result;
             }
-            String requestUrl = "https://cn.bing.com/search?q=" + query;
-            System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getSimpleName() + "-" + this.id + " request (" + requestUrl + ")...");
-            result = doRequest(requestUrl);
+            System.out.println("[" + Thread.currentThread().getName() + "]" + this.getClass().getSimpleName() + "-" + this.id + " query=" + query);
+            result = doRequest();
             if (result != null) {
                 cache.put(query, result);
             }
@@ -63,7 +62,12 @@ public class HttpRequestTask implements Callable<String> {
         return null;
     }
 
-    protected String doRequest(String requestUrl) throws Exception {
+    protected String doRequest() throws Exception {
+        String requestUrl = String.format("https://cn.bing.com/search?q=%s&qs=n&form=QBLH&sp=-1&pq=a&sc=9-1&sk=&cvid=493B94949A92491FB780F4BCCD085E37", query);
         return MyHttpClient.get(requestUrl);
+    }
+
+    public String getQuery() {
+        return this.query;
     }
 }
